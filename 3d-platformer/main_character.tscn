@@ -1,0 +1,70 @@
+[gd_scene load_steps=5 format=3 uid="uid://b1ygxp2ak6xk7"]
+
+[ext_resource type="Material" uid="uid://b8srshks1obu1" path="res://Material.001.tres" id="1_48ufq"]
+
+[sub_resource type="GDScript" id="GDScript_48ufq"]
+script/source = "extends CharacterBody3D
+
+const SPEED = 5.0
+const SPRINT = 1.5
+const JUMP_VELOCITY = 4.5
+
+
+@export_group(\"Camera\")
+@export_range(0.0,1.0) var mouse_sensitivity := 0.25	
+
+var _camera_input_direction := Vector2.ZERO
+
+
+
+func _physics_process(delta):
+	
+	
+	# Add the gravity.
+	if not is_on_floor():
+		velocity += get_gravity() * delta
+
+	# Handle jump.
+	if Input.is_action_just_pressed(\"ui_accept\") and is_on_floor():
+		velocity.y = JUMP_VELOCITY
+
+	# Get the input direction and handle the movement/deceleration.
+	# As good practice, you should replace UI actions with custom gameplay actions.
+	var input_dir = Input.get_vector(\"ui_left\", \"ui_right\", \"ui_up\", \"ui_down\")
+	var direction = (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
+	if direction:
+		velocity.x = direction.x * SPEED
+		velocity.z = direction.z * SPEED
+	else:
+		velocity.x = move_toward(velocity.x, 0, SPEED)
+		velocity.z = move_toward(velocity.z, 0, SPEED)
+
+	move_and_slide()
+
+	# Make Camera Controller Match position of character
+	$Camera_Controller.position = lerp($Camera_Controller.position,position,0.2)
+"
+
+[sub_resource type="BoxMesh" id="BoxMesh_wmkwl"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_uvl38"]
+
+[node name="MainCharacter" type="CharacterBody3D"]
+script = SubResource("GDScript_48ufq")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("BoxMesh_wmkwl")
+surface_material_override/0 = ExtResource("1_48ufq")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape3D_uvl38")
+
+[node name="Camera_Controller" type="Node3D" parent="."]
+top_level = true
+
+[node name="Camera_Target" type="Node3D" parent="Camera_Controller"]
+transform = Transform3D(1, 0, 0, 0, 0.96799016, 0.25098825, 0, -0.25098825, 0.96799016, 0, 2.8763883, 5.4302135)
+
+[node name="Camera3D" type="Camera3D" parent="Camera_Controller/Camera_Target"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.19401114, 0)
+current = true
